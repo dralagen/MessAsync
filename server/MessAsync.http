@@ -6,3 +6,7 @@ Content-Type: application/json
     "message": "mon message",
     "channel": "main"
 }
+
+###
+GET http://localhost:8080/events
+Content-Type: application/json

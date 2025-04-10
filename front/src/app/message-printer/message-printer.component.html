@@ -1,0 +1,8 @@
+<h1>Messages <button (click)="clear()">🗑️</button></h1>
+@for (m of messages(); track m.createdAt) {
+  <p>{{m.message}}<br/>
+    channel: {{m.channel}} - created at: {{m.createdAt | date:'full' }}
+  </p>
+} @empty {
+  <p>Aucun message reçu</p>
+}
