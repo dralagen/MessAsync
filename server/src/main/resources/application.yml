@@ -1,7 +1,5 @@
-spring.application.name: server
-
-
 spring:
+  application.name: server
   datasource:
     url: jdbc:h2:mem:messasync
     driverClassName: org.h2.Driver
