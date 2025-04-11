@@ -1,7 +1,6 @@
 package fr.dralagen.messasync.server.publication;
 
-import java.time.Duration;
-import java.util.concurrent.ExecutionException;
+import java.io.IOException;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,10 +23,12 @@ public class EmitPublish {
     }
 
     @GetMapping()
-    public SseEmitter publishMessage() throws ExecutionException, InterruptedException {
+    public SseEmitter publishMessage() throws IOException {
         log.info("create emitter");
         SseEmitter sseEmitter = new SseEmitter(SSE_EMITTER_TIMEOUT_MS);
         publicationMessage.subscribe(sseEmitter);
+
+        sseEmitter.send(SseEmitter.event().name("ping"));
         return sseEmitter;
     }
 
