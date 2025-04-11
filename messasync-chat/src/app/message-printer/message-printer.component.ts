@@ -1,7 +1,7 @@
 import {DatePipe} from '@angular/common';
 import {Component, signal} from '@angular/core';
 import {Subscription} from 'rxjs';
-import {Message, MessageService} from '../message.service';
+import {MessageResponse, MessageService} from '../message.service';
 
 @Component({
   selector: 'app-message-printer',
@@ -14,7 +14,7 @@ import {Message, MessageService} from '../message.service';
 export class MessagePrinterComponent {
   constructor(public messageService: MessageService) {
   }
-  messages = signal<Message[]>([]);
+  messages = signal<MessageResponse[]>([]);
   subscription: Subscription | undefined;
 
   ngOnInit() {

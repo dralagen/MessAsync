@@ -2,8 +2,14 @@ import {HttpClient} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs';
 
+
 export class Message {
-  constructor(public id: string, public message: string, public channel: string = "default", public createdAt?: Date) {
+  constructor(public message: string, public channel: string = "default") {
+  }
+}
+
+export class MessageResponse {
+  constructor(public id: string, public message: string, public channel: string, public createdAt: Date) {
   }
 }
 
@@ -23,14 +29,14 @@ export class MessageService {
     return this.http.post("http://localhost:8080/message", message)
   }
 
-  listenMessage(): Observable<Message> {
-    return new Observable<Message>(observer => {
+  listenMessage(): Observable<MessageResponse> {
+    return new Observable<MessageResponse>(observer => {
         const eventSource = new EventSource('http://localhost:8080/events');
         eventSource.addEventListener("createdMessage", (event) => {
           console.log("Received message", event.data);
           let createdMessage = JSON.parse(event.data) as CreatedEventMessage;
 
-          observer.next(new Message(
+          observer.next(new MessageResponse(
             createdMessage.id,
             createdMessage.body,
             createdMessage.channel,

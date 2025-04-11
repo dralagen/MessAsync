@@ -1,5 +1,18 @@
-<app-message-writer />
+<div class="container mx-auto px-4 py-8 max-w-4xl">
+  <header class="mb-6">
+    <h1 class="text-3xl font-bold text-blue-600">{{ title }}</h1>
+    <p class="text-gray-600">Application de messagerie en temps réel</p>
+  </header>
 
-<app-message-printer />
+  <main class="grid grid-cols-1 gap-6">
+    <div class="bg-white p-6 rounded-lg shadow-md">
+      <app-message-writer />
+    </div>
 
-<router-outlet />
+    <div class="bg-white p-6 rounded-lg shadow-md">
+      <app-message-printer />
+    </div>
+  </main>
+
+  <router-outlet />
+</div>

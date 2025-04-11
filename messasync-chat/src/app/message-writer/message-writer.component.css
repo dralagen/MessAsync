@@ -1,0 +1,22 @@
+form {
+  width: 100%;
+  margin: 1rem 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+input {
+  transition: all 0.2s ease-in-out;
+}
+
+input:focus {
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+button {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Animation lors du hover sur le champ de saisie */
+form:hover input {
+  border-color: #4b5563;
+}

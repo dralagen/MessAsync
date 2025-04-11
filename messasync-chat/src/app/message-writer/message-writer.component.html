@@ -1,4 +1,17 @@
-<form (ngSubmit)="sendMessage(messageForm)" #messageForm="ngForm">
-  <input type="text" name="message" ngModel required/>
-  <button type="submit" [disabled]="!messageForm.valid">Send</button>
+<form (ngSubmit)="sendMessage(messageForm)" #messageForm="ngForm" class="relative flex">
+  <input 
+    type="text" 
+    name="message" 
+    ngModel 
+    required
+    placeholder="Votre message..."
+    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none pr-[100px]"
+  />
+  <button 
+    type="submit" 
+    [disabled]="!messageForm.valid"
+    class="absolute right-0 top-0 h-full px-4 bg-blue-600 text-white font-medium rounded-r-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition duration-200"
+  >
+    Envoyer
+  </button>
 </form>

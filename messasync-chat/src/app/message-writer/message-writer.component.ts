@@ -16,7 +16,7 @@ export class MessageWriterComponent {
 
   sendMessage(form: NgForm) {
     if (form.valid) {
-      console.log(form.value.message);
+      console.log("Sending message", form.value.message);
       let message = new Message(form.value.message, "default")
       this.sendMessageService.sendMessage(message)
         .subscribe(() => {
