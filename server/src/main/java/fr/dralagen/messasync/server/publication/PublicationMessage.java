@@ -37,6 +37,7 @@ public class PublicationMessage {
                 client.incrementAndGet();
             } catch (Exception e) {
                 log.debug("error to emit message into sseEmitter {}", sseEmitter, e);
+                sseEmitter.completeWithError(e);
             }
         });
 
