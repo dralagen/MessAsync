@@ -11,5 +11,5 @@ import {MessageWriterComponent} from './message-writer/message-writer.component'
   styleUrl: './app.component.css'
 })
 export class AppComponent {
-  title = 'front';
+  title = 'MessAsync Chat';
 }

@@ -34,7 +34,7 @@ export class MessageService {
         }
         eventSource.onerror = (event) => {
           console.log("Received error", event);
-          // observer.error(event);
+          observer.error(event);
         }
       }
     )

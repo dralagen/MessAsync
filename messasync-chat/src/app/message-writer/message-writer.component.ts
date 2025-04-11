@@ -1,14 +1,11 @@
-import {DatePipe} from '@angular/common';
-import {Component, inject, model, Output, signal} from '@angular/core';
+import {Component, inject} from '@angular/core';
 import {FormsModule, NgForm} from '@angular/forms';
-import {Subscription} from 'rxjs';
 import {Message, MessageService} from '../message.service';
 
 @Component({
   selector: 'app-message-writer',
   imports: [
-    FormsModule,
-    DatePipe
+    FormsModule
   ],
   templateUrl: './message-writer.component.html',
   styleUrl: './message-writer.component.css'
