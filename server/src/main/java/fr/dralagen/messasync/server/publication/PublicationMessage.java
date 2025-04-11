@@ -1,12 +1,9 @@
 package fr.dralagen.messasync.server.publication;
 
-import java.io.IOException;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Observable;
-import java.util.Observer;
-import java.util.concurrent.Flow;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.http.MediaType;
 import org.springframework.modulith.events.ApplicationModuleListener;
@@ -20,7 +17,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class PublicationMessage {
 
-    private List<SseEmitter> observers = new ArrayList<>();
+    private List<SseEmitter> observers = new CopyOnWriteArrayList<>();
 
     @ApplicationModuleListener
     void publishMessage(CreatedMessageEvent messageEvent) throws InterruptedException {
@@ -28,23 +25,39 @@ public class PublicationMessage {
 
         Thread.sleep(Duration.ofMillis((long) (Math.random() * 2500 + 500)));
 
-        for (SseEmitter sseEmitter : observers) {
-            try {
-                sseEmitter.send(messageEvent, MediaType.APPLICATION_JSON);
-            } catch (Exception e) {
-                observers.remove(sseEmitter);
-                log.error("remove sseEmitter {}", sseEmitter, e);
-            }
-        }
+        AtomicInteger client = new AtomicInteger(0);
 
-        log.info("Published message({}) : {}", messageEvent.channel(), messageEvent.body());
+        observers.forEach(sseEmitter -> {
+            try {
+                sseEmitter.send(SseEmitter.event()
+                    .id(String.valueOf(messageEvent.id()))
+                    .name("createdMessage")
+                    .data(messageEvent, MediaType.APPLICATION_JSON));
+
+                client.incrementAndGet();
+            } catch (Exception e) {
+                log.debug("error to emit message into sseEmitter {}", sseEmitter, e);
+            }
+        });
+
+        log.info("Published message({}) to {} client(s) : {}", messageEvent.channel(), client.get(), messageEvent.body());
 
     }
 
     public void subscribe(SseEmitter sseEmitter) {
         observers.add(sseEmitter);
-        sseEmitter.onCompletion(() -> observers.remove(sseEmitter));
-        sseEmitter.onTimeout(() -> observers.remove(sseEmitter));
-        sseEmitter.onError((e) -> observers.remove(sseEmitter));
+        sseEmitter.onCompletion(() -> {
+            observers.remove(sseEmitter);
+            log.info("Removed completed sseEmitter {}", sseEmitter);
+        });
+        sseEmitter.onTimeout(() -> {
+            observers.remove(sseEmitter);
+            log.info("Removed timeout sseEmitter {}", sseEmitter);
+        });
+        sseEmitter.onError((e) -> {
+            observers.remove(sseEmitter);
+            log.error("remove error sseEmitter {}", sseEmitter, e);
+        });
     }
+
 }

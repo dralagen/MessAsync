@@ -3,12 +3,12 @@ import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs';
 
 export class Message {
-  constructor(public message: string, public channel: string = "default", public createdAt?: Date) {
+  constructor(public id: string, public message: string, public channel: string = "default", public createdAt?: Date) {
   }
 }
 
 class CreatedEventMessage {
-  constructor(public body: string, public channel: string, public createdAt: Date) {
+  constructor(public id: string, public body: string, public channel: string, public createdAt: Date) {
   }
 }
 
@@ -26,12 +26,18 @@ export class MessageService {
   listenMessage(): Observable<Message> {
     return new Observable<Message>(observer => {
         const eventSource = new EventSource('http://localhost:8080/events');
-        eventSource.onmessage = (event) => {
+        eventSource.addEventListener("createdMessage", (event) => {
           console.log("Received message", event.data);
           let createdMessage = JSON.parse(event.data) as CreatedEventMessage;
 
-          observer.next(new Message(createdMessage.body, createdMessage.channel, createdMessage.createdAt));
-        }
+          observer.next(new Message(
+            createdMessage.id,
+            createdMessage.body,
+            createdMessage.channel,
+            createdMessage.createdAt
+          ));
+        });
+
         eventSource.onerror = (event) => {
           console.log("Received error", event);
           observer.error(event);

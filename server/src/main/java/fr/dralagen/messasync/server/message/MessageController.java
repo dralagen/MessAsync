@@ -1,11 +1,11 @@
 package fr.dralagen.messasync.server.message;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,7 +27,10 @@ public class MessageController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Transactional
-    public void sendMessage(@RequestBody MessageDto message) {
-        events.publishEvent(new CreatedMessageEvent(message.message(), message.channel(), LocalDateTime.now()));
+    public CreatedMessageEvent sendMessage(@RequestBody MessageDto message) {
+        CreatedMessageEvent event = new CreatedMessageEvent(UUID.randomUUID(), message.message(), message.channel(), LocalDateTime.now());
+        events.publishEvent(event);
+
+        return event;
     }
 }
