@@ -11,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
-@RequestMapping("/events")
+@RequestMapping("message/event")
 public class EmitPublish {
 
     public static final long SSE_EMITTER_TIMEOUT_MS = 10 * 60 * 1000;
@@ -28,7 +28,7 @@ public class EmitPublish {
         SseEmitter sseEmitter = new SseEmitter(SSE_EMITTER_TIMEOUT_MS);
         publicationMessage.subscribe(sseEmitter);
 
-        sseEmitter.send(SseEmitter.event().name("ping"));
+        sseEmitter.send(SseEmitter.event().name("heartbeat"));
         return sseEmitter;
     }
 
