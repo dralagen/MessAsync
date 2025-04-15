@@ -86,6 +86,7 @@ public class PublicationMessage {
                 sseEmitter.completeWithError(e);
             } catch (IllegalStateException e) {
                 log.debug("emitter already closed");
+                observers.remove(sseEmitter);
             }
         });
     }
