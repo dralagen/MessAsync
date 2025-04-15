@@ -12,18 +12,18 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestController
 @RequestMapping("message/event")
-public class EmitPublish {
+public class MessageEventController {
 
     public static final long SSE_EMITTER_TIMEOUT_MS = 10 * 60 * 1000;
 
     private final PublicationMessage publicationMessage;
 
-    public EmitPublish(PublicationMessage publicationMessage) {
+    public MessageEventController(PublicationMessage publicationMessage) {
         this.publicationMessage = publicationMessage;
     }
 
     @GetMapping()
-    public SseEmitter publishMessage() throws IOException {
+    public SseEmitter subscribeMessageEvent() throws IOException {
         log.info("create emitter");
         SseEmitter sseEmitter = new SseEmitter(SSE_EMITTER_TIMEOUT_MS);
         publicationMessage.subscribe(sseEmitter);
