@@ -31,6 +31,10 @@ public class PublicationMessage {
         this.messageProcessingService = messageProcessingService;
     }
 
+    private static MessageEvent convertEvent(CreatedMessageEvent messageEvent) {
+        return new MessageEvent(String.valueOf(messageEvent.id()), messageEvent.body(), messageEvent.body(), messageEvent.createdAt());
+    }
+
     @ApplicationModuleListener
     void publishMessage(CreatedMessageEvent messageEvent) {
         log.info("Received a messageEvent({}) : {}", messageEvent.channel(), messageEvent.body());
@@ -55,10 +59,6 @@ public class PublicationMessage {
 
         log.info("Published message({}) to {} client(s) : {}", messageEvent.channel(), client.get(), messageEvent.body());
 
-    }
-
-    private static MessageEvent convertEvent(CreatedMessageEvent messageEvent) {
-        return new MessageEvent(String.valueOf(messageEvent.id()), messageEvent.body(), messageEvent.body(), messageEvent.createdAt());
     }
 
     public void subscribe(SseEmitter sseEmitter) {
