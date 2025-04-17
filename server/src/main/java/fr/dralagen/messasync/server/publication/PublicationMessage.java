@@ -32,7 +32,7 @@ public class PublicationMessage {
     }
 
     private static MessageEvent convertEvent(CreatedMessageEvent messageEvent) {
-        return new MessageEvent(String.valueOf(messageEvent.id()), messageEvent.body(), messageEvent.body(), messageEvent.createdAt());
+        return new MessageEvent(String.valueOf(messageEvent.id()), messageEvent.body(), messageEvent.channel(), messageEvent.createdAt());
     }
 
     @ApplicationModuleListener
