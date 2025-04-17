@@ -2,9 +2,10 @@ package fr.dralagen.messasync.server.publication;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 import org.springframework.http.MediaType;
 import org.springframework.modulith.events.ApplicationModuleListener;
@@ -41,24 +42,29 @@ public class PublicationMessage {
 
         MessageEvent message = messageProcessingService.processMessage(convertEvent(messageEvent));
 
-        AtomicInteger client = new AtomicInteger(0);
+        long nbClientNotified = observers.stream().map(sendCreatedMessageEvent(message))
+            .filter(Objects::nonNull)
+            .count();
 
-        observers.forEach(sseEmitter -> {
+        log.info("Published message({}) to {} client(s) : {}", messageEvent.channel(), nbClientNotified, messageEvent.body());
+
+    }
+
+    private static Function<SseEmitter, SseEmitter> sendCreatedMessageEvent(MessageEvent message) {
+        return sseEmitter -> {
             try {
                 sseEmitter.send(SseEmitter.event()
                     .id(String.valueOf(message.id()))
                     .name("createdMessage")
                     .data(message, MediaType.APPLICATION_JSON));
 
-                client.incrementAndGet();
+                return sseEmitter;
             } catch (Exception e) {
                 log.debug("error to emit message into sseEmitter {}", sseEmitter, e);
                 sseEmitter.completeWithError(e);
             }
-        });
-
-        log.info("Published message({}) to {} client(s) : {}", messageEvent.channel(), client.get(), messageEvent.body());
-
+            return null;
+        };
     }
 
     public void subscribe(SseEmitter sseEmitter) {
