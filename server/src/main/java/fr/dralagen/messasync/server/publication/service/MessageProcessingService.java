@@ -1,23 +1,24 @@
 package fr.dralagen.messasync.server.publication.service;
 
-import java.time.Duration;
-
 import org.springframework.stereotype.Service;
 
 import fr.dralagen.messasync.server.publication.dto.MessageEvent;
+import fr.dralagen.messasync.server.publication.transformer.MessageTransformer;
 
 @Service
 public class MessageProcessingService {
 
-    public MessageEvent processMessage(MessageEvent events) {
+    private final MessageTransformer messageTransformer;
 
-        try {
-            Thread.sleep(Duration.ofMillis((long) (Math.random() * 2500 + 500)));
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-
-        return events;
+    public MessageProcessingService(MessageTransformer messageTransformer) {
+        this.messageTransformer = messageTransformer;
     }
 
+    public MessageEvent processMessage(MessageEvent events) {
+
+        String enrichedMessage = messageTransformer.transform(events.message());
+
+        return new MessageEvent(events.id(), enrichedMessage, events.channel(), events.createdAt());
+
+    }
 }
