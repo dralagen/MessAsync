@@ -1,4 +1,4 @@
-import {Component, inject, OnInit} from '@angular/core';
+import {Component, EventEmitter, inject, OnInit, Output} from '@angular/core';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {Message, MessageService} from '../message.service';
 
@@ -11,6 +11,7 @@ import {Message, MessageService} from '../message.service';
   styleUrl: './message-writer.component.css'
 })
 export class MessageWriterComponent implements OnInit {
+  @Output() channelChange = new EventEmitter<string>();
   messageForm!: FormGroup; // Added "!" non-null assertion operator
   private sendMessageService = inject(MessageService);
   private fb = inject(FormBuilder);
@@ -21,7 +22,16 @@ export class MessageWriterComponent implements OnInit {
 
   private initForm(): void {
     this.messageForm = this.fb.group({
-      message: ['', Validators.required]
+      message: ['', Validators.required],
+      channel: ['default', Validators.required]
+    });
+    
+    // Emit initial channel
+    this.channelChange.emit('default');
+    
+    // Listen for channel changes
+    this.messageForm.get('channel')?.valueChanges.subscribe(channel => {
+      this.channelChange.emit(channel);
     });
   }
 
@@ -29,12 +39,15 @@ export class MessageWriterComponent implements OnInit {
     if (this.messageForm.valid) {
       this.messageForm.disable()
       console.log("Sending message", this.messageForm.value.message);
-      const message = new Message(this.messageForm.value.message, "default");
+      const message = new Message(this.messageForm.value.message, this.messageForm.value.channel);
 
       this.sendMessageService.sendMessage(message)
         .subscribe({
           next: () => {
-            this.messageForm.reset();
+            this.messageForm.reset({
+              message: '',
+              channel: this.messageForm.value.channel
+            });
             this.messageForm.enable();
           },
           error: (error) => {

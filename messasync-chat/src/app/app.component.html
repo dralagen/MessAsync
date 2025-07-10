@@ -6,11 +6,11 @@
 
   <main class="grid grid-cols-1 gap-6">
     <div class="bg-white p-6 rounded-lg shadow-md">
-      <app-message-writer />
+      <app-message-writer (channelChange)="onChannelChange($event)" />
     </div>
 
     <div class="bg-white p-6 rounded-lg shadow-md">
-      <app-message-printer />
+      <app-message-printer [selectedChannel]="selectedChannel()" />
     </div>
   </main>
 

@@ -29,9 +29,9 @@ export class MessageService {
     return this.http.post<CreatedEventMessage>("http://localhost:8080/message", message)
   }
 
-  listenMessage(): Observable<MessageResponse> {
+  listenMessage(channel: string = 'default'): Observable<MessageResponse> {
     return new Observable<MessageResponse>(observer => {
-        const eventSource = new EventSource('http://localhost:8080/message/event');
+        const eventSource = new EventSource(`http://localhost:8080/message/event?channel=${channel}`);
         eventSource.addEventListener("createdMessage", (event) => {
           console.log("Received message", event.data);
           let createdMessage = JSON.parse(event.data) as MessageResponse;

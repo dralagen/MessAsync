@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -23,10 +24,10 @@ public class MessageEventController {
     }
 
     @GetMapping()
-    public SseEmitter subscribeMessageEvent() throws IOException {
-        log.info("create emitter");
+    public SseEmitter subscribeMessageEvent(@RequestParam(defaultValue = "default") String channel) throws IOException {
+        log.info("create emitter for channel: {}", channel);
         SseEmitter sseEmitter = new SseEmitter(SSE_EMITTER_TIMEOUT_MS);
-        publicationMessage.subscribe(sseEmitter);
+        publicationMessage.subscribe(sseEmitter, channel);
 
         sseEmitter.send(SseEmitter.event().name("heartbeat"));
         return sseEmitter;
