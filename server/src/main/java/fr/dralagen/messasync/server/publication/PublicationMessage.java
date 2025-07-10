@@ -98,18 +98,16 @@ public class PublicationMessage {
 
     @Scheduled(fixedDelay = 30, timeUnit = TimeUnit.SECONDS)
     public void heartbeat() {
-        observersByChannel.forEach((channel, observers) -> {
-            observers.forEach(sseEmitter -> {
-                try {
-                    sseEmitter.send(SseEmitter.event().name("heartbeat"));
-                } catch (IOException e) {
-                    sseEmitter.completeWithError(e);
-                } catch (IllegalStateException e) {
-                    log.debug("emitter already closed");
-                    removeObserver(sseEmitter, channel);
-                }
-            });
-        });
+        observersByChannel.forEach((channel, observers) -> observers.forEach(sseEmitter -> {
+            try {
+                sseEmitter.send(SseEmitter.event().name("heartbeat"));
+            } catch (IOException e) {
+                sseEmitter.completeWithError(e);
+            } catch (IllegalStateException e) {
+                log.debug("emitter already closed");
+                removeObserver(sseEmitter, channel);
+            }
+        }));
     }
 
 }

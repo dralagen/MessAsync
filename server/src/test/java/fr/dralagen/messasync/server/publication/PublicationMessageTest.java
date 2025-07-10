@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -33,7 +34,7 @@ import fr.dralagen.messasync.server.publication.service.MessageProcessingService
 
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -57,9 +58,9 @@ class PublicationMessageTest {
 
     @AfterEach
     void tearDown() {
-        List<SseEmitter> observers = getObservers();
-        assertThat(observers).isNotNull();
-        observers.clear();
+        Map<String, List<SseEmitter>> observersByChannel = getObserversByChannel();
+        assertThat(observersByChannel).isNotNull();
+        observersByChannel.clear();
     }
 
     @Test
@@ -99,50 +100,134 @@ class PublicationMessageTest {
     }
 
     @Test
-    void shouldNoError_onHeartBeat_whenRequestIsOpen() {
-        List<SseEmitter> observers = getObservers();
-        assertThat(observers).hasSize(0);
+    @Transactional
+    void should_receiveMessage_whenSubribeToNewMessageOnChannelEmoji(Scenario scenario) throws Exception {
 
-        SseEmitter sseEmitter = new SseEmitter();
-        publicationMessage.subscribe(sseEmitter);
+        MvcResult mvcResult = mockMvc.perform(get("/message/event?channel=emoji"))
+            .andExpect(status().isOk())
+            .andReturn();
 
-        assertThat(observers).hasSize(1);
+        assertThat(mvcResult.getResponse().getContentType()).contains(MediaType.TEXT_EVENT_STREAM_VALUE);
 
-        publicationMessage.heartbeat();
+        // On prépare et publie un événement
+        String messageId = "00421fe5-34e8-49f3-83a5-df6d95e6f8e6";
+        String message = "Premier Message";
+        String channel = "emoji";
+        LocalDateTime createdAt = LocalDateTime.of(2025, 4, 14, 15, 36, 45);
 
-        assertThat(observers).hasSize(1);
+        CreatedMessageEvent event = new CreatedMessageEvent(
+            UUID.fromString(messageId),
+            message,
+            channel,
+            createdAt);
+        MessageEvent expectedEvent = new MessageEvent(messageId, message, channel, createdAt);
+
+        mockProcessMessage(expectedEvent);
+
+        scenario.publish(event)
+            .andWaitAtMost(Duration.ofSeconds(3))
+            .andWaitForStateChange(() -> messageProcessingService.processMessage(expectedEvent));
+
+        String content = mvcResult.getResponse().getContentAsString();
+
+        assertThat(content).contains("id:" + messageId)
+            .contains("data:" + OBJECT_MAPPER.writeValueAsString(expectedEvent));
+
     }
 
     @Test
-    void shouldRemoveSseEmitter_whenHaveCompleted() throws Exception {
-        List<SseEmitter> observers = getObservers();
-        assertThat(observers).hasSize(0);
+    @Transactional
+    void should_publishMessageToCorrectChannelOnly_whenMultipleChannelsExist(Scenario scenario) throws Exception {
 
         MvcResult mvcResult = mockMvc.perform(get("/message/event"))
             .andExpect(status().isOk())
             .andReturn();
 
-        assertThat(observers).hasSize(1);
+        MvcResult mvcResultEmoji = mockMvc.perform(get("/message/event?channel=emoji"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+        assertThat(mvcResult.getResponse().getContentType()).contains(MediaType.TEXT_EVENT_STREAM_VALUE);
+
+        // On prépare et publie un événement
+        String messageId = "00421fe5-34e8-49f3-83a5-df6d95e6f8e6";
+        String message = "Premier Message";
+        String channel = "emoji";
+        LocalDateTime createdAt = LocalDateTime.of(2025, 4, 14, 15, 36, 45);
+
+        CreatedMessageEvent event = new CreatedMessageEvent(
+            UUID.fromString(messageId),
+            message,
+            channel,
+            createdAt);
+        MessageEvent expectedEvent = new MessageEvent(messageId, message, channel, createdAt);
+
+        mockProcessMessage(expectedEvent);
+
+        scenario.publish(event)
+            .andWaitAtMost(Duration.ofSeconds(3))
+            .andWaitForStateChange(() -> messageProcessingService.processMessage(expectedEvent));
+
+        String content = mvcResult.getResponse().getContentAsString();
+        String contentEmoji = mvcResultEmoji.getResponse().getContentAsString();
+
+        assertThat(content).doesNotContain("id:");
+        assertThat(contentEmoji).contains("id:" + messageId)
+            .contains("data:" + OBJECT_MAPPER.writeValueAsString(expectedEvent));
+
+    }
+
+    @Test
+    void shouldNoError_onHeartBeat_whenRequestIsOpen() {
+        Map<String, List<SseEmitter>> observersByChannel = getObserversByChannel();
+        assertThat(observersByChannel).isEmpty();
+
+        SseEmitter sseEmitter = new SseEmitter();
+        publicationMessage.subscribe(sseEmitter, "default");
+
+        assertThat(observersByChannel).hasSize(1);
+        assertThat(observersByChannel.get("default")).hasSize(1);
+
+        publicationMessage.heartbeat();
+
+        assertThat(observersByChannel).hasSize(1);
+        assertThat(observersByChannel.get("default")).hasSize(1);
+    }
+
+    @Test
+    void shouldRemoveSseEmitter_whenHaveCompleted() throws Exception {
+        Map<String, List<SseEmitter>> observersByChannel = getObserversByChannel();
+        assertThat(observersByChannel).isEmpty();
+
+        MvcResult mvcResult = mockMvc.perform(get("/message/event"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+        Map<String, List<SseEmitter>> observersByChannelAfterSubscribe = getObserversByChannel();
+        assertThat(observersByChannelAfterSubscribe).hasSize(1);
+        assertThat(observersByChannelAfterSubscribe.get("default")).hasSize(1);
 
         Objects.requireNonNull(mvcResult.getRequest().getAsyncContext()).complete();
 
-        assertThat(observers).hasSize(0);
+        Map<String, List<SseEmitter>> observersByChannelAfterComplete = getObserversByChannel();
+        assertThat(observersByChannelAfterComplete).isEmpty();
     }
 
     @Test
     void shouldRemoveSseEmitter_onHeartbeat_whenAlreadyClose() throws IOException {
-        List<SseEmitter> observers = getObservers();
-        assertThat(observers).hasSize(0);
+        Map<String, List<SseEmitter>> observersByChannel = getObserversByChannel();
+        assertThat(observersByChannel).isEmpty();
 
         SseEmitter sseEmitter = new SseEmitter();
-        publicationMessage.subscribe(sseEmitter);
-        assertThat(observers).hasSize(1);
+        publicationMessage.subscribe(sseEmitter, "default");
+        assertThat(observersByChannel).hasSize(1);
+        assertThat(observersByChannel.get("default")).hasSize(1);
 
         sseEmitter.complete();
 
         publicationMessage.heartbeat();
 
-        assertThat(observers).hasSize(0);
+        assertThat(observersByChannel).isEmpty();
 
     }
 
@@ -153,7 +238,7 @@ class PublicationMessageTest {
     }
 
     @SuppressWarnings("unchecked")
-    private List<SseEmitter> getObservers() {
-        return (List<SseEmitter>) ReflectionTestUtils.getField(publicationMessage, "observers");
+    private Map<String, List<SseEmitter>> getObserversByChannel() {
+        return (Map<String, List<SseEmitter>>) ReflectionTestUtils.getField(publicationMessage, "observersByChannel");
     }
 }
